@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GhostLock · 一键 ROOT</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#131a22; --panel2:#182230; --line:#233044;
+    --fg:#e6edf5; --dim:#8b9bb0; --acc:#3fb950; --acc2:#2f81f7;
+    --warn:#d29922; --err:#f85149; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Cascadia Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:14px/1.5 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  h1{font-size:20px;margin:0;font-weight:650;letter-spacing:.3px}
+  .tag{font-size:12px;color:var(--dim);border:1px solid var(--line);
+       padding:2px 8px;border-radius:99px}
+  .dot{width:9px;height:9px;border-radius:50%;background:#555;display:inline-block;
+       margin-right:7px;vertical-align:middle}
+  .dot.on{background:var(--acc);box-shadow:0 0 8px var(--acc)}
+  .dot.off{background:var(--err)}
+  .dot.busy{background:var(--warn);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+
+  .hero{background:linear-gradient(135deg,#16202c,#101720);border:1px solid var(--line);
+        border-radius:14px;padding:20px;display:flex;gap:18px;align-items:center;
+        flex-wrap:wrap;margin-bottom:16px}
+  .hero .txt{flex:1;min-width:240px}
+  .hero .big{font-size:26px;font-weight:700;margin-bottom:4px}
+  .hero .sub{color:var(--dim);font-size:13px}
+  button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--fg);
+         padding:9px 15px;border-radius:9px;font-size:13.5px;font-weight:550;
+         transition:.15s;font-family:inherit}
+  button:hover:not(:disabled){border-color:#3a4d68;background:#1e2a3a}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.primary{background:linear-gradient(135deg,#238636,#2ea043);border-color:#2ea043;
+                 font-size:16px;padding:14px 30px;font-weight:700}
+  button.primary:hover:not(:disabled){filter:brightness(1.1)}
+  button.danger{border-color:#5c2b2b;color:#ff9d95}
+  button.ghost{background:transparent}
+  button.sm{padding:6px 11px;font-size:12.5px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;
+        margin-bottom:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+  .card .k{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px}
+  .card .v{font-size:15px;font-weight:600;margin-top:5px;word-break:break-all}
+  .card .v.ok{color:var(--acc)} .card .v.no{color:var(--err)} .card .v.mid{color:var(--warn)}
+
+  .cols{display:grid;grid-template-columns:1fr 380px;gap:14px;align-items:start}
+  @media(max-width:900px){.cols{grid-template-columns:1fr}}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .box h2{margin:0;padding:11px 14px;font-size:13px;font-weight:600;color:var(--dim);
+          border-bottom:1px solid var(--line);display:flex;justify-content:space-between;
+          align-items:center;letter-spacing:.4px}
+  #log{height:430px;overflow:auto;padding:12px 14px;font:12.5px/1.65 var(--mono);
+       white-space:pre-wrap;word-break:break-all;margin:0}
+  #log .e{color:var(--err)} #log .ok{color:var(--acc)} #log .w{color:var(--warn)}
+  .side .box{margin-bottom:12px}
+  .side .body{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .su{display:flex;gap:6px}
+  .su input{flex:1;background:#0d131a;border:1px solid var(--line);color:var(--fg);
+            border-radius:8px;padding:8px 10px;font:12.5px var(--mono);min-width:0}
+  ul.apps{list-style:none;margin:0;padding:0;font-size:13px;max-height:180px;overflow:auto}
+  ul.apps li{padding:5px 0;border-bottom:1px solid #1b2531;display:flex;gap:8px;align-items:center}
+  ul.apps li:last-child{border:0}
+  .pill{background:#1d3a24;color:#7ee787;border-radius:6px;padding:1px 7px;font-size:11px;
+        font-weight:600;letter-spacing:.5px}
+  .muted{color:var(--dim);font-size:12.5px}
+  footer{color:var(--dim);font-size:12px;margin-top:22px;text-align:center}
+  code{font-family:var(--mono);background:#0d131a;padding:1px 5px;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>GhostLock · 一键 ROOT</h1>
+    <span class="tag"><span id="dot" class="dot"></span><span id="conn">检测中…</span></span>
+    <span class="tag" id="serialTag">—</span>
+    <span class="tag" id="kernelTag">—</span>
+  </header>
+
+  <div class="hero">
+    <div class="txt">
+      <div class="big" id="heroTitle">准备就绪</div>
+      <div class="sub" id="heroSub">点击右侧按钮开始：自动执行 exploit、加载内核模块、登记管理器。</div>
+    </div>
+    <button class="primary" id="btnRoot">⚡ 一键 ROOT</button>
+    <button class="ghost" id="btnCancel" disabled>取消</button>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="k">设备</div><div class="v" id="cDevice">—</div></div>
+    <div class="card"><div class="k">ROOT</div><div class="v" id="cRoot">—</div></div>
+    <div class="card"><div class="k">KernelSU 模块</div><div class="v" id="cKsu">—</div></div>
+    <div class="card"><div class="k">ghostlock 模块</div><div class="v" id="cGl">—</div></div>
+    <div class="card"><div class="k">管理器</div><div class="v" id="cApk">—</div></div>
+    <div class="card"><div class="k">管理器 appid</div><div class="v" id="cMgr">—</div></div>
+    <div class="card"><div class="k">shim 守护</div><div class="v" id="cShim">—</div></div>
+    <div class="card"><div class="k">uptime / 已授权</div><div class="v" id="cUp">—</div></div>
+  </div>
+
+  <div class="cols">
+    <div class="box">
+      <h2><span>运行日志</span><button class="sm ghost" id="btnClear">清屏</button></h2>
+      <pre id="log"></pre>
+    </div>
+
+    <div class="side">
+      <div class="box">
+        <h2>操作</h2>
+        <div class="body">
+          <div class="row">
+            <button class="sm" id="btnVerify">校验状态</button>
+            <button class="sm" id="btnSoft">软重启</button>
+            <button class="sm" id="btnMgr">打开管理器</button>
+            <button class="sm" id="btnApk">安装/重装管理器</button>
+          </div>
+          <div class="muted">软重启会重启 Android 框架（不重启内核），
+            安装模块后用它生效。<br>
+            「安装/重装管理器」会装好 KernelSU 管理器 APK 并重新部署启动器
+            —— 换机/重装管理器后用得上。</div>
+        </div>
+      </div>
+
+      <div class="box">
+        <h2>已授权 App</h2>
+        <div class="body">
+          <ul class="apps" id="apps"><li class="muted">—</li></ul>
+        </div>
+      </div>
+
+      <div class="box">
+        <h2>执行 su 命令</h2>
+        <div class="body">
+          <div class="su">
+            <input id="suCmd" placeholder="id" spellcheck="false">
+            <button class="sm" id="btnSu">执行</button>
+          </div>
+          <div class="muted">在设备上以 root 执行，输出进入日志。</div>
+        </div>
+      </div>
+
+      <div class="box">
+        <h2>说明</h2>
+        <div class="body muted">
+          本工具针对 <b>iQOO Neo9S Pro (PD2339)</b> / 内核 6.1.145。<br><br>
+          root 为<b>临时</b>：重启后需重新执行。<br>
+          管理器若显示「未安装」，说明 App 未持有驱动 fd，
+          重启一次管理器 App 即可。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>GhostLock Web Console · 本地服务，仅监听 127.0.0.1</footer>
+</div>
+
+<script>
+let since = 0, busy = false;
+
+const $ = id => document.getElementById(id);
+
+function cls(line){
+  if (/\[!\]|失败|异常/.test(line)) return 'e';
+  if (/\[\+\]|\*\*\*|✅/.test(line)) return 'ok';
+  if (/\[~\]|\[i\]|等待/.test(line)) return 'w';
+  return '';
+}
+
+function appendLines(lines){
+  if(!lines || !lines.length) return;
+  const el = $('log');
+  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
+  const frag = document.createDocumentFragment();
+  for(const l of lines){
+    const s = document.createElement('span');
+    s.className = cls(l);
+    s.textContent = l + '\n';
+    frag.appendChild(s);
+  }
+  el.appendChild(frag);
+  while(el.childNodes.length > 1200) el.removeChild(el.firstChild);
+  if(atBottom) el.scrollTop = el.scrollHeight;
+}
+
+async function pollLog(){
+  try{
+    const r = await fetch('/api/log?since=' + since);
+    const j = await r.json();
+    since = j.since;
+    appendLines(j.lines);
+  }catch(e){}
+}
+
+async function pollStatus(){
+  try{
+    const r = await fetch('/api/status');
+    const s = await r.json();
+    render(s);
+  }catch(e){
+    $('conn').textContent = '服务不可用';
+    $('dot').className = 'dot off';
+  }
+}
+
+function setV(id, text, state){
+  const el = $(id);
+  el.textContent = text;
+  el.className = 'v' + (state ? ' ' + state : '');
+}
+
+function render(s){
+  $('dot').className = 'dot ' + (s.online ? 'on' : 'off');
+  $('conn').textContent = s.online ? '设备已连接' : '设备未连接';
+  $('serialTag').textContent = s.serial || '—';
+  $('kernelTag').textContent = s.kernel || '—';
+
+  setV('cDevice', s.model || (s.online ? '未知' : '未连接'), s.online ? 'ok' : 'no');
+  setV('cRoot', s.rooted ? '已获取' : (s.online ? '无' : '—'), s.rooted ? 'ok' : 'no');
+  setV('cKsu', s.modules.kernelsu ? '已加载' : (s.online ? '未加载' : '—'),
+       s.modules.kernelsu ? 'ok' : 'no');
+  setV('cGl', s.modules.ghostlock ? '已加载' : (s.online ? '未加载' : '—'),
+       s.modules.ghostlock ? 'ok' : 'no');
+  const mid = s.manager_appid;
+  setV('cApk', s.manager_installed ? '已安装' : (s.manager_apk_bundled ? '未安装' : '资源缺失'),
+       s.manager_installed ? 'ok' : (s.manager_apk_bundled ? 'mid' : 'no'));
+  setV('cMgr', (mid === null || mid === undefined) ? '—'
+        : (mid < 0 ? '未登记' : mid + (s.manager_uid ? ' (uid ' + s.manager_uid + ')' : '')),
+       mid > 0 ? 'ok' : (mid === -1 ? 'mid' : ''));
+  setV('cShim', s.shim ? '运行中' : '未运行', s.shim ? 'ok' : 'mid');
+  const up = s.uptime ? Math.floor(s.uptime) + 's' : '—';
+  setV('cUp', up + ' / ' + (s.superuser ? s.superuser.length : 0) + ' 个');
+
+  const ul = $('apps');
+  ul.innerHTML = '';
+  if(s.superuser && s.superuser.length){
+    for(const a of s.superuser){
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="pill">ROOT</span><span>' + a + '</span>';
+      ul.appendChild(li);
+    }
+  } else {
+    ul.innerHTML = '<li class="muted">' + (s.rooted ? '暂无授权记录' : '需要 ROOT 后读取') + '</li>';
+  }
+
+  const flow = s.flow || {};
+  busy = !!flow.running;
+  $('btnRoot').disabled = busy || !s.online;
+  $('btnCancel').disabled = !busy;
+  $('btnSoft').disabled = !s.rooted;
+  $('btnSu').disabled = !s.rooted;
+
+  if(busy){
+    $('dot').className = 'dot busy';
+    $('conn').textContent = '执行中…';
+    $('heroTitle').textContent = flow.attempt ? ('第 ' + flow.attempt + ' 次尝试…') : '正在执行…';
+    $('heroSub').textContent = flow.message || '请不要拔线，等待自动完成。';
+  } else if(flow.phase === 'done'){
+    $('heroTitle').textContent = '✅ ROOT 完成';
+    $('heroSub').textContent = '已加载内核模块并登记管理器。可直接打开管理器使用。';
+  } else if(flow.phase === 'error'){
+    $('heroTitle').textContent = '❌ 执行失败';
+    $('heroSub').textContent = flow.message || '请查看日志。';
+  } else if(s.rooted){
+    $('heroTitle').textContent = '当前已 ROOT';
+    $('heroSub').textContent = '如需修复管理器/模块，可直接再点一次（幂等）。';
+  } else {
+    $('heroTitle').textContent = s.online ? '准备就绪' : '等待设备连接';
+    $('heroSub').textContent = '点击「一键 ROOT」自动完成全部步骤。';
+  }
+}
+
+async function post(path, body){
+  try{
+    const r = await fetch(path, {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body || {})});
+    return await r.json();
+  }catch(e){ return {error:String(e)}; }
+}
+
+$('btnRoot').onclick = async () => {
+  $('log').innerHTML = ''; since = 0;
+  const r = await post('/api/root');
+  if(!r.started) appendLines(['[!] ' + (r.msg || '无法启动')]);
+  pollLog(); pollStatus();
+};
+$('btnCancel').onclick = () => post('/api/cancel');
+$('btnVerify').onclick = () => post('/api/verify').then(pollStatus);
+$('btnSoft').onclick   = () => { if(confirm('确认软重启？Android 框架会重启，约 20 秒。')) post('/api/softreboot'); };
+$('btnMgr').onclick    = () => post('/api/openmanager');
+$('btnApk').onclick    = async () => {
+  if(!confirm('安装/重装 KernelSU 管理器 APK？\n\n重装会还原 APK 内的 libksud.so，\n工具随后会自动重新部署启动器。'))
+    return;
+  $('log').innerHTML = ''; since = 0;
+  appendLines(['[*] 开始安装管理器…']);
+  const r = await post('/api/installmanager');
+  if(r && r.ok === false) appendLines(['[!] 安装失败，见下方日志']);
+  pollLog(); pollStatus();
+};
+$('btnClear').onclick  = () => { $('log').innerHTML = ''; };
+$('btnSu').onclick = async () => {
+  const c = $('suCmd').value.trim();
+  if(!c) return;
+  await post('/api/su', {cmd:c});
+  pollLog();
+};
+$('suCmd').addEventListener('keydown', e => { if(e.key === 'Enter') $('btnSu').click(); });
+
+pollStatus();
+pollLog();
+setInterval(pollLog, 700);
+setInterval(pollStatus, 2500);
+</script>
+</body>
+</html>

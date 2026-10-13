@@ -1,0 +1,26 @@
+# ????????? GitHub Releases??????
+*.ko
+*.so
+*.exe
+*.apk
+*.zip
+*.o
+*.mod
+*.mod.c
+*.cmd
+Module.symvers
+modules.order
+__pycache__/
+*.pyc
+
+# GUI ??????
+gui/assets/
+gui/build/
+gui/dist/
+*.spec
+
+# ??? / ??
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
