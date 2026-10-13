@@ -129,7 +129,7 @@ E KernelSU: ksud::init_event: UAPI version mismatch: kernel=0, ksud=2.
 
 ### 方式 A：图形界面（推荐）
 
-1. 到 [Releases](../../releases) 下载 **`GhostLock一键ROOT.zip`**（28 MB）
+1. 到 [Releases](../../releases) 下载 **`GhostLock-OneClickROOT.zip`**（28 MB）
 2. 解压，手机 USB 连电脑、打开「USB 调试」并授权本机
 3. **双击 `GhostLock一键ROOT.exe`** → 浏览器自动打开界面 → 点「⚡ 一键 ROOT」
 
